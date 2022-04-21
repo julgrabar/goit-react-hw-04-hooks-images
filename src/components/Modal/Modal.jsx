@@ -5,17 +5,22 @@ import { Overlay } from './Modal.styled';
 
 export const Modal = ({ modalImg, onClose }) => {
   const closeModal = e => {
-    if (e.code === 'Escape' || e.target === e.currentTarget) {
+    if (e.target === e.currentTarget) {
       onClose();
     }
   };
   useEffect(() => {
+    const closeModal = e => {
+      if (e.code === 'Escape') {
+        onClose();
+      }
+    };
     window.addEventListener('keydown', closeModal);
 
     return () => {
       window.removeEventListener('keydown', closeModal);
     };
-  }, [closeModal]);
+  }, [onClose]);
 
   return createPortal(
     <Overlay onClick={closeModal}>
