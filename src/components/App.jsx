@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { SearchBar } from './SearchBar/SearchBar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Global } from './Global';
@@ -9,102 +9,77 @@ import { Loader } from './Loader/Loader';
 import { NoResult } from './NoResult.styled';
 import { Modal } from './Modal/Modal';
 
-export class App extends Component {
-  state = {
-    searchValue: '',
-    images: [],
-    page: 1,
-    isLoading: false,
-    totalResults: 0,
-    isModalOpen: false,
-    modalImage: null,
-  };
+export const App = () => {
+  const [searchValue, setSearchValue] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [totalResults, setTotalResults] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
-  async componentDidUpdate(_, prevState) {
-    const { page, searchValue } = this.state;
-    if (prevState.searchValue !== searchValue || prevState.page !== page) {
+  useEffect(() => {
+    if (searchValue === '') {
+      return;
+    }
+    const fetchData = async () => {
       try {
-        this.setState({
-          isLoading: true,
-        });
+        setIsLoading(true);
 
         const images = await getImages(searchValue, page);
         const { totalHits, hits } = images;
-        this.setState(prev => ({
-          images: [...prev.images, ...mapper(hits)],
-          totalResults: totalHits === 0 ? -1 : totalHits,
-        }));
+        setImages(prev => [...prev, ...mapper(hits)]);
+        setTotalResults(totalHits === 0 ? -1 : totalHits);
       } catch (error) {
         alert(
           'Упс.. Что-то пошло не так.. Перезагрузите страницу или ввидите другой поисковый запрос.'
         );
       } finally {
-        this.setState({
-          isLoading: false,
-        });
+        setIsLoading(false);
       }
-    }
-  }
+    };
+    fetchData();
+  }, [searchValue, page]);
 
-  onSubmit = text => {
-    this.setState({
-      searchValue: text,
-      images: [],
-      page: 1,
-    });
+  const onSubmit = text => {
+    setSearchValue(text);
+    setImages([]);
+    setPage(1);
   };
 
-  onNextPage = () => {
-    this.setState(prev => ({
-      page: prev.page + 1,
-    }));
+  const onNextPage = () => {
+    setPage(prev => prev + 1);
   };
 
-  onImgClick = () => {
-    this.setState(prev => ({
-      isModalOpen: !prev.isModalOpen,
-    }));
+  const onImgClick = () => {
+    setIsModalOpen(prev => !prev);
   };
 
-  setModalImage = image => {
-    this.setState({
-      modalImage: image,
-    });
-  };
-
-  render() {
-    const { isLoading, images, totalResults, isModalOpen, modalImage } =
-      this.state;
-
-    return (
-      <div className="App">
-        <Global />
-
-        <SearchBar onSubmit={this.onSubmit} />
-        {images.length > 0 && (
-          <ImageGallery
-            images={images}
-            onImgClick={this.onImgClick}
-            setImage={this.setModalImage}
+  return (
+    <div className="App">
+      <Global />
+      <SearchBar onSearch={onSubmit} />
+      {images.length > 0 && (
+        <ImageGallery
+          images={images}
+          onImgClick={onImgClick}
+          setImage={setModalImage}
+        />
+      )}
+      {isLoading && <Loader />}
+      {images.length < totalResults && isLoading === false && (
+        <Button onBtn={onNextPage} />
+      )}
+      {isModalOpen && <Modal modalImg={modalImage} onClose={onImgClick} />}
+      {totalResults === -1 && isLoading === false && (
+        <NoResult>
+          <span>There is no result</span>
+          <img
+            src="https://thumbs.gfycat.com/InfiniteUnlawfulKinglet-size_restricted.gif"
+            alt="not found"
           />
-        )}
-        {isLoading && <Loader />}
-        {images.length < totalResults && isLoading === false && (
-          <Button onBtn={this.onNextPage} />
-        )}
-        {isModalOpen && (
-          <Modal modalImg={modalImage} onClose={this.onImgClick} />
-        )}
-        {totalResults === -1 && isLoading === false && (
-          <NoResult>
-            <span>There is no result</span>
-            <img
-              src="https://thumbs.gfycat.com/InfiniteUnlawfulKinglet-size_restricted.gif"
-              alt="not found"
-            />
-          </NoResult>
-        )}
-      </div>
-    );
-  }
-}
+        </NoResult>
+      )}
+    </div>
+  );
+};
