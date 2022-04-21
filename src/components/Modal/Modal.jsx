@@ -4,11 +4,6 @@ import { useEffect } from 'react';
 import { Overlay } from './Modal.styled';
 
 export const Modal = ({ modalImg, onClose }) => {
-  const closeModal = e => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
   useEffect(() => {
     const closeModal = e => {
       if (e.code === 'Escape') {
@@ -21,6 +16,12 @@ export const Modal = ({ modalImg, onClose }) => {
       window.removeEventListener('keydown', closeModal);
     };
   }, [onClose]);
+
+  const closeModal = e => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return createPortal(
     <Overlay onClick={closeModal}>
