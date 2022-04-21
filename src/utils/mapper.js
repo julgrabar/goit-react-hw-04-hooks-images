@@ -1,0 +1,1 @@
+export const mapper=( arr)=> arr.map(({id, webformatURL, largeImageURL, tags}) => ({id, webformatURL, largeImageURL, tags})) 
